@@ -30,21 +30,19 @@ jobs:
       - name: Docker Build
         env:
           STAGE_CACHE: ${{ env.GITHUB_PACKAGE_REGISTRY }}/${{ github.repository }}/${{ env.REPOSITORY }}:stage
+          MAJOR_TAG: ${{ env.USERNAME }}/${{ env.REPOSITORY }}:${{ steps.version.outputs.major }}
           MINOR_TAG: ${{ env.USERNAME }}/${{ env.REPOSITORY }}:${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}
           PATCH_TAG: ${{ env.USERNAME }}/${{ env.REPOSITORY }}:${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}.${{ steps.version.outputs.patch }}
+          LATEST_TAG: ${{ env.USERNAME }}/${{ env.REPOSITORY }}:latest
         run: |
           docker pull ${{ env.STAGE_CACHE }} || true
           docker build \
             --cache-from=${{ env.STAGE_CACHE }} \
+            --tag=${{ env.MAJOR_TAG }} \
             --tag=${{ env.MINOR_TAG }} \
             --tag=${{ env.PATCH_TAG }} \
+            --tag=${{ env.LATEST_TAG }} \
             .
-
-      - name: Create Latest Tag
-        if: contains(github.ref, env.LATEST_VERSION)
-        run: |
-          docker tag ${{ env.USERNAME }}/${{ env.REPOSITORY }}:${{ steps.version.outputs.tag }} ${{ env.USERNAME }}/${{ env.REPOSITORY }}:${{ steps.version.outputs.major }}
-          docker tag ${{ env.USERNAME }}/${{ env.REPOSITORY }}:${{ steps.version.outputs.tag }} ${{ env.USERNAME }}/${{ env.REPOSITORY }}:latest
 
       - name: Docker Publish
         run: docker push --all-tags ${{ env.USERNAME }}/${{ env.REPOSITORY }}
