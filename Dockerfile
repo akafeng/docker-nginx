@@ -93,8 +93,8 @@ RUN set -eux \
     # && tar -xzf openssl-${OPENSSL_VERSION}.tar.gz \
     # && ( \
     #         cd openssl-${OPENSSL_VERSION}/; \
-    #         wget -O - "$OPENSSL_EQUAL_PATCH" | patch -p1; \
-    #         wget -O - "$OPENSSL_CHACHA_DRAFT_PATCH" | patch -p1 \
+    #         wget -O - ${OPENSSL_EQUAL_PATCH} | patch -p1; \
+    #         wget -O - ${OPENSSL_CHACHA_DRAFT_PATCH} | patch -p1 \
     #     ) \
     \
     # quiche
@@ -110,7 +110,7 @@ RUN set -eux \
     && ( \
             cd libatomic_ops-${LIBATOMIC_VERSION}/; \
             ./configure; \
-            make -j "$(nproc)"; \
+            make -j $(nproc); \
             ln -s .libs/libatomic_ops.a src/libatomic_ops.a \
         ) \
     \
@@ -147,19 +147,19 @@ RUN set -eux \
     && wget -O - ${NGINX_BORINGSSL_OCSP_PATCH} | patch -p1 \
     \
     && ./configure \
-        --prefix=/etc/nginx/ \
+        --prefix=/etc/nginx \
         --sbin-path=/usr/sbin/nginx \
-        --modules-path=/usr/lib/nginx/modules/ \
+        --modules-path=/usr/lib/nginx/modules \
         --conf-path=/etc/nginx/nginx.conf \
         --error-log-path=/var/log/nginx/error.log \
         --http-log-path=/var/log/nginx/access.log \
         --pid-path=/var/run/nginx.pid \
         --lock-path=/var/run/nginx.lock \
-        --http-client-body-temp-path=/var/cache/nginx/client_temp/ \
-        --http-proxy-temp-path=/var/cache/nginx/proxy_temp/ \
-        --http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp/ \
-        --http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp/ \
-        --http-scgi-temp-path=/var/cache/nginx/scgi_temp/ \
+        --http-client-body-temp-path=/var/cache/nginx/client_temp \
+        --http-proxy-temp-path=/var/cache/nginx/proxy_temp \
+        --http-fastcgi-temp-path=/var/cache/nginx/fastcgi_temp \
+        --http-uwsgi-temp-path=/var/cache/nginx/uwsgi_temp \
+        --http-scgi-temp-path=/var/cache/nginx/scgi_temp \
         --user=nginx \
         --group=nginx \
         --with-http_ssl_module \
@@ -209,7 +209,7 @@ RUN set -eux \
         --add-module=/usr/src/nginx-${NGINX_VERSION}/ngx_http_geoip2_module-${MODULE_GEOIP2_VERSION} \
         --with-http_v2_hpack_enc \
         --with-http_v3_module \
-    && make -j "$(nproc)" \
+    && make -j $(nproc) \
     && make install \
     \
     && rm -rf /etc/nginx/html/ \
