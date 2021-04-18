@@ -3,10 +3,10 @@
 </p>
 
 <p align="center">
-    <img src="https://img.shields.io/docker/v/akafeng/nginx?sort=semver&style=flat-square" />
-    <img src="https://img.shields.io/docker/pulls/akafeng/nginx?style=flat-square" />
-    <img src="https://img.shields.io/microbadger/layers/akafeng/nginx?style=flat-square" />
-    <img src="https://img.shields.io/docker/image-size/akafeng/nginx??sort=semver&style=flat-square" />
+    <img src="https://img.shields.io/docker/v/akafeng/nginx?sort=semver" />
+    <img src="https://img.shields.io/docker/pulls/akafeng/nginx" />
+    <img src="https://img.shields.io/microbadger/layers/akafeng/nginx" />
+    <img src="https://img.shields.io/docker/image-size/akafeng/nginx?sort=semver" />
 </p>
 
 ---
