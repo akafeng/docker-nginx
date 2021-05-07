@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-if [ ! -z "$ENABLE_CRONTAB" ]; then
+if [ ! -z "${ENABLE_CRONTAB}" ]; then
 	cron -f &
 fi
 

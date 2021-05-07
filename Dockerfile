@@ -1,4 +1,4 @@
-FROM rust:1.51.0-slim-buster AS builder
+FROM rust:1.52.0-slim-buster AS builder
 
 LABEL maintainer="metowolf <i@i-meto.com>, akafeng <i@sjy.im>"
 
@@ -19,7 +19,7 @@ ARG ZLIB_URL="https://github.com/cloudflare/zlib.git"
 # ARG OPENSSL_EQUAL_PATCH="https://raw.githubusercontent.com/hakasenyang/openssl-patch/master/openssl-equal-1.1.1e-dev_ciphers.patch"
 # ARG OPENSSL_CHACHA_DRAFT_PATCH="https://raw.githubusercontent.com/CarterLi/openssl-patch/master/openssl-1.1.1i-chacha_draft.patch"
 
-ARG QUICHE_VERSION="0.8.0"
+ARG QUICHE_VERSION="0.8.1"
 ARG QUICHE_URL="https://github.com/cloudflare/quiche.git"
 
 ARG PCRE_VERSION="8.44"
@@ -75,7 +75,7 @@ RUN set -eux \
     && gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
     && gpgconf --kill all \
     \
-    && tar -xzC /usr/src/ -f nginx.tar.gz \
+    && tar -xzvC /usr/src/ -f nginx.tar.gz \
     && rm -rf nginx* ${GNUPGHOME}
 
 RUN set -eux \
@@ -90,7 +90,7 @@ RUN set -eux \
     # \
     # OpenSSL
     # && wget -O openssl-${OPENSSL_VERSION}.tar.gz ${OPENSSL_URL} \
-    # && tar -xzf openssl-${OPENSSL_VERSION}.tar.gz \
+    # && tar -xzvf openssl-${OPENSSL_VERSION}.tar.gz \
     # && ( \
     #         cd openssl-${OPENSSL_VERSION}/; \
     #         wget -O - ${OPENSSL_EQUAL_PATCH} | patch -p1; \
@@ -102,11 +102,11 @@ RUN set -eux \
     \
     # PCRE
     && wget -O pcre-${PCRE_VERSION}.tar.gz ${PCRE_URL} \
-    && tar -xzf pcre-${PCRE_VERSION}.tar.gz \
+    && tar -xzvf pcre-${PCRE_VERSION}.tar.gz \
     \
     # libatomic_ops
     && wget -O libatomic_ops-${LIBATOMIC_VERSION}.tar.gz ${LIBATOMIC_URL} \
-    && tar -xzf libatomic_ops-${LIBATOMIC_VERSION}.tar.gz \
+    && tar -xzvf libatomic_ops-${LIBATOMIC_VERSION}.tar.gz \
     && ( \
             cd libatomic_ops-${LIBATOMIC_VERSION}/; \
             ./configure; \
@@ -122,21 +122,21 @@ RUN set -eux \
     \
     # headers-more-nginx
     && wget -O headers-more-nginx-module-${MODULE_HEADERS_MORE_VERSION}.tar.gz ${MODULE_HEADERS_MORE_URL} \
-    && tar -xzf headers-more-nginx-module-${MODULE_HEADERS_MORE_VERSION}.tar.gz \
+    && tar -xzvf headers-more-nginx-module-${MODULE_HEADERS_MORE_VERSION}.tar.gz \
     \
     # nginx-http-flv-module
     && git clone --depth 1 ${MODULE_HTTP_FLV_URL} \
     \
     # ngx-fancyindex
     && wget -O ngx-fancyindex-${MODULE_FANCYINDEX_VERSION}.tar.xz ${MODULE_FANCYINDEX_URL} \
-    && tar -xf ngx-fancyindex-${MODULE_FANCYINDEX_VERSION}.tar.xz \
+    && tar -xvf ngx-fancyindex-${MODULE_FANCYINDEX_VERSION}.tar.xz \
     \
     # nginx_substitutions_filter
     && git clone --depth 1 ${MODULE_SUBS_FILTER_URL} \
     \
     # ngx_http_geoip2_module
     && wget -O ngx_http_geoip2_module-${MODULE_GEOIP2_VERSION}.tar.gz ${MODULE_GEOIP2_URL} \
-    && tar -xzf ngx_http_geoip2_module-${MODULE_GEOIP2_VERSION}.tar.gz
+    && tar -xzvf ngx_http_geoip2_module-${MODULE_GEOIP2_VERSION}.tar.gz
 
 RUN set -eux \
     && cd /usr/src/nginx-${NGINX_VERSION}/ \
@@ -249,7 +249,7 @@ RUN set -eux \
         libmaxminddb0 \
     && rm -rf /var/lib/apt/lists/* /var/log/* \
     \
-    && echo '1 0 * * * /usr/sbin/logrotate -f /etc/logrotate.conf' > /var/spool/cron/crontabs/root \
+    && echo "1 0 * * * /usr/sbin/logrotate -f /etc/logrotate.conf" > /var/spool/cron/crontabs/root \
     && addgroup --system nginx \
     && adduser --system --disabled-login --ingroup nginx --no-create-home --home /nonexistent --shell /bin/false nginx \
     && mkdir -p /usr/lib/nginx/modules/ \
@@ -267,7 +267,9 @@ RUN set -eux \
 COPY docker-entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["docker-entrypoint.sh"]
 
-EXPOSE 80 443
+EXPOSE 80/tcp
+EXPOSE 443/tcp
+EXPOSE 443/udp
 
 STOPSIGNAL SIGQUIT
 
