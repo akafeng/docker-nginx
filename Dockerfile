@@ -2,7 +2,7 @@ FROM rust:1.52.0-slim-buster AS builder
 
 LABEL maintainer="metowolf <i@i-meto.com>, akafeng <i@sjy.im>"
 
-ARG NGINX_VERSION="1.19.10"
+ARG NGINX_VERSION="1.21.0"
 ARG NGINX_GPG_KEY="B0F4253373F8F6F510D42178520A9993A1C052F8"
 ARG NGINX_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz"
 ARG NGINX_PGP_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc"
