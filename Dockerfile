@@ -1,6 +1,9 @@
-FROM rust:1.52.0-slim-buster AS builder
+FROM rust:1.54.0-slim-buster AS builder
 
-LABEL maintainer="metowolf <i@i-meto.com>, akafeng <i@sjy.im>"
+LABEL \
+    org.opencontainers.image.title="nginx" \
+    org.opencontainers.image.authors="metowolf <i@i-meto.com>, akafeng <i@sjy.im>" \
+    org.opencontainers.image.source="https://github.com/akafeng/docker-nginx"
 
 ARG NGINX_VERSION="1.21.0"
 ARG NGINX_GPG_KEY="B0F4253373F8F6F510D42178520A9993A1C052F8"
@@ -19,10 +22,10 @@ ARG ZLIB_URL="https://github.com/cloudflare/zlib.git"
 # ARG OPENSSL_EQUAL_PATCH="https://raw.githubusercontent.com/hakasenyang/openssl-patch/master/openssl-equal-1.1.1e-dev_ciphers.patch"
 # ARG OPENSSL_CHACHA_DRAFT_PATCH="https://raw.githubusercontent.com/CarterLi/openssl-patch/master/openssl-1.1.1i-chacha_draft.patch"
 
-ARG QUICHE_VERSION="0.8.1"
+ARG QUICHE_VERSION="0.9.0"
 ARG QUICHE_URL="https://github.com/cloudflare/quiche.git"
 
-ARG PCRE_VERSION="8.44"
+ARG PCRE_VERSION="8.45"
 ARG PCRE_URL="https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VERSION}.tar.gz"
 
 ARG LIBATOMIC_VERSION="7.6.10"
@@ -75,7 +78,7 @@ RUN set -eux \
     && gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
     && gpgconf --kill all \
     \
-    && tar -xzvC /usr/src/ -f nginx.tar.gz \
+    && tar -xzvf nginx.tar.gz -C /usr/src/ \
     && rm -rf nginx* ${GNUPGHOME}
 
 RUN set -eux \
@@ -98,7 +101,7 @@ RUN set -eux \
     #     ) \
     \
     # quiche
-    && git clone --branch ${QUICHE_VERSION} --depth=1 --recurse-submodules --shallow-submodules ${QUICHE_URL} \
+    && git clone --depth=1 --recurse-submodules --shallow-submodules ${QUICHE_URL} \
     \
     # PCRE
     && wget -O pcre-${PCRE_VERSION}.tar.gz ${PCRE_URL} \
@@ -231,7 +234,10 @@ COPY config/logrotate /etc/nginx/logrotate
 
 FROM debian:buster-slim
 
-LABEL maintainer="metowolf <i@i-meto.com>, akafeng <i@sjy.im>"
+LABEL \
+    org.opencontainers.image.title="nginx" \
+    org.opencontainers.image.authors="metowolf <i@i-meto.com>, akafeng <i@sjy.im>" \
+    org.opencontainers.image.source="https://github.com/akafeng/docker-nginx"
 
 COPY --from=builder /usr/sbin/nginx /usr/sbin/nginx
 COPY --from=builder /etc/nginx/ /etc/nginx/
