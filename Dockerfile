@@ -1,11 +1,11 @@
-FROM rust:1.54.0-slim-buster AS builder
+FROM rust:1.55.0-slim-buster AS builder
 
 LABEL \
     org.opencontainers.image.title="nginx" \
     org.opencontainers.image.authors="metowolf <i@i-meto.com>, akafeng <i@sjy.im>" \
     org.opencontainers.image.source="https://github.com/akafeng/docker-nginx"
 
-ARG NGINX_VERSION="1.21.1"
+ARG NGINX_VERSION="1.21.2"
 ARG NGINX_GPG_KEY="B0F4253373F8F6F510D42178520A9993A1C052F8"
 ARG NGINX_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz"
 ARG NGINX_PGP_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc"
@@ -22,13 +22,13 @@ ARG ZLIB_URL="https://github.com/cloudflare/zlib.git"
 # ARG OPENSSL_EQUAL_PATCH="https://raw.githubusercontent.com/hakasenyang/openssl-patch/master/openssl-equal-1.1.1e-dev_ciphers.patch"
 # ARG OPENSSL_CHACHA_DRAFT_PATCH="https://raw.githubusercontent.com/CarterLi/openssl-patch/master/openssl-1.1.1i-chacha_draft.patch"
 
-ARG QUICHE_VERSION="0.9.0"
+ARG QUICHE_VERSION="0.10.0"
 ARG QUICHE_URL="https://github.com/cloudflare/quiche.git"
 
 ARG PCRE_VERSION="8.45"
 ARG PCRE_URL="https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VERSION}.tar.gz"
 
-ARG LIBATOMIC_VERSION="7.6.10"
+ARG LIBATOMIC_VERSION="7.6.12"
 ARG LIBATOMIC_URL="https://github.com/ivmai/libatomic_ops/releases/download/v${LIBATOMIC_VERSION}/libatomic_ops-${LIBATOMIC_VERSION}.tar.gz"
 
 ARG MODULE_BROTLI_URL="https://github.com/google/ngx_brotli.git"
@@ -101,7 +101,7 @@ RUN set -eux \
     #     ) \
     \
     # quiche
-    && git clone --depth=1 --recurse-submodules --shallow-submodules ${QUICHE_URL} \
+    && git clone --branch ${QUICHE_VERSION} --depth=1 --recurse-submodules --shallow-submodules ${QUICHE_URL} \
     \
     # PCRE
     && wget -O pcre-${PCRE_VERSION}.tar.gz ${PCRE_URL} \
