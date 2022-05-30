@@ -1,11 +1,6 @@
-FROM rust:1.55.0-slim-buster AS builder
+FROM rust:1.61.0-slim-bullseye AS builder
 
-LABEL \
-    org.opencontainers.image.title="nginx" \
-    org.opencontainers.image.authors="metowolf <i@i-meto.com>, akafeng <i@sjy.im>" \
-    org.opencontainers.image.source="https://github.com/akafeng/docker-nginx"
-
-ARG NGINX_VERSION="1.21.3"
+ARG NGINX_VERSION="1.21.6"
 ARG NGINX_GPG_KEY="B0F4253373F8F6F510D42178520A9993A1C052F8"
 ARG NGINX_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz"
 ARG NGINX_PGP_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc"
@@ -22,11 +17,11 @@ ARG ZLIB_URL="https://github.com/cloudflare/zlib.git"
 # ARG OPENSSL_EQUAL_PATCH="https://raw.githubusercontent.com/hakasenyang/openssl-patch/master/openssl-equal-1.1.1e-dev_ciphers.patch"
 # ARG OPENSSL_CHACHA_DRAFT_PATCH="https://raw.githubusercontent.com/CarterLi/openssl-patch/master/openssl-1.1.1i-chacha_draft.patch"
 
-ARG QUICHE_VERSION="0.10.0"
+ARG QUICHE_VERSION="0.14.0"
 ARG QUICHE_URL="https://github.com/cloudflare/quiche.git"
 
 ARG PCRE_VERSION="8.45"
-ARG PCRE_URL="https://ftp.pcre.org/pub/pcre/pcre-${PCRE_VERSION}.tar.gz"
+ARG PCRE_URL="https://downloads.sourceforge.net/project/pcre/pcre/${PCRE_VERSION}/pcre-${PCRE_VERSION}.tar.gz"
 
 ARG LIBATOMIC_VERSION="7.6.12"
 ARG LIBATOMIC_URL="https://github.com/ivmai/libatomic_ops/releases/download/v${LIBATOMIC_VERSION}/libatomic_ops-${LIBATOMIC_VERSION}.tar.gz"
@@ -40,7 +35,7 @@ ARG MODULE_HEADERS_MORE_URL="https://github.com/openresty/headers-more-nginx-mod
 
 ARG MODULE_HTTP_FLV_URL="https://github.com/winshining/nginx-http-flv-module.git"
 
-ARG MODULE_FANCYINDEX_VERSION="0.5.1"
+ARG MODULE_FANCYINDEX_VERSION="0.5.2"
 ARG MODULE_FANCYINDEX_URL="https://github.com/aperezdc/ngx-fancyindex/releases/download/v${MODULE_FANCYINDEX_VERSION}/ngx-fancyindex-${MODULE_FANCYINDEX_VERSION}.tar.xz"
 
 ARG MODULE_SUBS_FILTER_URL="https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git"
@@ -71,9 +66,9 @@ RUN set -eux \
     \
     && export GNUPGHOME=$(mktemp -d); \
         for key in ${NGINX_GPG_KEY}; do \
-            gpg --batch --keyserver ha.pool.sks-keyservers.net --keyserver-options timeout=10 --recv-keys ${key} || \
-            gpg --batch --keyserver hkp://ipv4.pool.sks-keyservers.net --keyserver-options timeout=10 --recv-keys ${key} || \
-            gpg --batch --keyserver hkp://pgp.mit.edu:80 --keyserver-options timeout=10 --recv-keys ${key}; \
+            gpg --batch --keyserver hkps://keyserver.ubuntu.com --keyserver-options timeout=10 --recv-keys ${key} || \
+            gpg --batch --keyserver hkps://pgp.surf.nl --keyserver-options timeout=10 --recv-keys ${key} || \
+            gpg --batch --keyserver hkp://pgp.mit.edu --keyserver-options timeout=10 --recv-keys ${key}; \
         done \
     && gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
     && gpgconf --kill all \
@@ -198,7 +193,7 @@ RUN set -eux \
         --with-zlib=/usr/src/nginx-${NGINX_VERSION}/zlib \
         # --with-openssl=/usr/src/nginx-${NGINX_VERSION}/openssl-${OPENSSL_VERSION} \
         # --with-openssl-opt="zlib enable-weak-ssl-ciphers enable-ec_nistp_64_gcc_128 -ljemalloc -Wl,-flto" \
-        --with-openssl=/usr/src/nginx-${NGINX_VERSION}/quiche/deps/boringssl \
+        --with-openssl=/usr/src/nginx-${NGINX_VERSION}/quiche/quiche/deps/boringssl \
         --with-quiche=/usr/src/nginx-${NGINX_VERSION}/quiche \
         --with-pcre=/usr/src/nginx-${NGINX_VERSION}/pcre-${PCRE_VERSION} \
         --with-pcre-jit \
@@ -232,12 +227,7 @@ COPY config/logrotate /etc/nginx/logrotate
 
 ######
 
-FROM debian:buster-slim
-
-LABEL \
-    org.opencontainers.image.title="nginx" \
-    org.opencontainers.image.authors="metowolf <i@i-meto.com>, akafeng <i@sjy.im>" \
-    org.opencontainers.image.source="https://github.com/akafeng/docker-nginx"
+FROM debian:bullseye-slim
 
 COPY --from=builder /usr/sbin/nginx /usr/sbin/nginx
 COPY --from=builder /etc/nginx/ /etc/nginx/
