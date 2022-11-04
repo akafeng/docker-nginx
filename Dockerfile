@@ -1,7 +1,7 @@
-FROM rust:1.61.0-slim-bullseye AS builder
+FROM rust:1.65.0-slim-bullseye AS builder
 
-ARG NGINX_VERSION="1.21.6"
-ARG NGINX_GPG_KEY="B0F4253373F8F6F510D42178520A9993A1C052F8"
+ARG NGINX_VERSION="1.23.2"
+ARG NGINX_GPG_KEY="13C82A63B603576156E30A4EA0EA981B66B0D967"
 ARG NGINX_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz"
 ARG NGINX_PGP_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc"
 
@@ -17,20 +17,20 @@ ARG ZLIB_URL="https://github.com/cloudflare/zlib.git"
 # ARG OPENSSL_EQUAL_PATCH="https://raw.githubusercontent.com/hakasenyang/openssl-patch/master/openssl-equal-1.1.1e-dev_ciphers.patch"
 # ARG OPENSSL_CHACHA_DRAFT_PATCH="https://raw.githubusercontent.com/CarterLi/openssl-patch/master/openssl-1.1.1i-chacha_draft.patch"
 
-ARG QUICHE_VERSION="0.14.0"
+ARG QUICHE_VERSION="0.16.0"
 ARG QUICHE_URL="https://github.com/cloudflare/quiche.git"
 
 ARG PCRE_VERSION="8.45"
 ARG PCRE_URL="https://downloads.sourceforge.net/project/pcre/pcre/${PCRE_VERSION}/pcre-${PCRE_VERSION}.tar.gz"
 
-ARG LIBATOMIC_VERSION="7.6.12"
+ARG LIBATOMIC_VERSION="7.6.14"
 ARG LIBATOMIC_URL="https://github.com/ivmai/libatomic_ops/releases/download/v${LIBATOMIC_VERSION}/libatomic_ops-${LIBATOMIC_VERSION}.tar.gz"
 
 ARG MODULE_BROTLI_URL="https://github.com/google/ngx_brotli.git"
 
-ARG MODULE_STICKY_URL="https://bitbucket.org/nginx-goodies/nginx-sticky-module-ng.git"
+ARG MODULE_STICKY_URL="https://github.com/dvershinin/nginx-sticky-module-ng.git"
 
-ARG MODULE_HEADERS_MORE_VERSION="0.33"
+ARG MODULE_HEADERS_MORE_VERSION="0.34"
 ARG MODULE_HEADERS_MORE_URL="https://github.com/openresty/headers-more-nginx-module/archive/refs/tags/v${MODULE_HEADERS_MORE_VERSION}.tar.gz"
 
 ARG MODULE_HTTP_FLV_URL="https://github.com/winshining/nginx-http-flv-module.git"
@@ -40,7 +40,7 @@ ARG MODULE_FANCYINDEX_URL="https://github.com/aperezdc/ngx-fancyindex/releases/d
 
 ARG MODULE_SUBS_FILTER_URL="https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git"
 
-ARG MODULE_GEOIP2_VERSION="3.3"
+ARG MODULE_GEOIP2_VERSION="3.4"
 ARG MODULE_GEOIP2_URL="https://github.com/leev/ngx_http_geoip2_module/archive/refs/tags/${MODULE_GEOIP2_VERSION}.tar.gz"
 
 RUN set -eux \
