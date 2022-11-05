@@ -33,7 +33,8 @@ ARG MODULE_STICKY_URL="https://github.com/dvershinin/nginx-sticky-module-ng.git"
 ARG MODULE_HEADERS_MORE_VERSION="0.34"
 ARG MODULE_HEADERS_MORE_URL="https://github.com/openresty/headers-more-nginx-module/archive/refs/tags/v${MODULE_HEADERS_MORE_VERSION}.tar.gz"
 
-ARG MODULE_HTTP_FLV_URL="https://github.com/winshining/nginx-http-flv-module.git"
+ARG MODULE_HTTP_FLV_VERSION="1.2.10"
+ARG MODULE_HTTP_FLV_URL="https://github.com/winshining/nginx-http-flv-module/archive/refs/tags/v${MODULE_HTTP_FLV_VERSION}.tar.gz"
 
 ARG MODULE_FANCYINDEX_VERSION="0.5.2"
 ARG MODULE_FANCYINDEX_URL="https://github.com/aperezdc/ngx-fancyindex/releases/download/v${MODULE_FANCYINDEX_VERSION}/ngx-fancyindex-${MODULE_FANCYINDEX_VERSION}.tar.xz"
@@ -123,7 +124,8 @@ RUN set -eux \
     && tar -xzvf headers-more-nginx-module-${MODULE_HEADERS_MORE_VERSION}.tar.gz \
     \
     # nginx-http-flv-module
-    && git clone --depth 1 ${MODULE_HTTP_FLV_URL} \
+    && wget -O nginx-http-flv-module-${MODULE_HTTP_FLV_VERSION}.tar.xz ${MODULE_HTTP_FLV_URL} \
+    && tar -xvf nginx-http-flv-module-${MODULE_HTTP_FLV_VERSION}.tar.xz \
     \
     # ngx-fancyindex
     && wget -O ngx-fancyindex-${MODULE_FANCYINDEX_VERSION}.tar.xz ${MODULE_FANCYINDEX_URL} \
@@ -201,7 +203,7 @@ RUN set -eux \
         --add-module=/usr/src/nginx-${NGINX_VERSION}/ngx_brotli \
         --add-module=/usr/src/nginx-${NGINX_VERSION}/nginx-sticky-module-ng \
         --add-module=/usr/src/nginx-${NGINX_VERSION}/headers-more-nginx-module-${MODULE_HEADERS_MORE_VERSION} \
-        --add-module=/usr/src/nginx-${NGINX_VERSION}/nginx-http-flv-module \
+        --add-module=/usr/src/nginx-${NGINX_VERSION}/nginx-http-flv-module-${MODULE_HTTP_FLV_VERSION} \
         --add-module=/usr/src/nginx-${NGINX_VERSION}/ngx-fancyindex-${MODULE_FANCYINDEX_VERSION} \
         --add-module=/usr/src/nginx-${NGINX_VERSION}/ngx_http_substitutions_filter_module \
         --add-module=/usr/src/nginx-${NGINX_VERSION}/ngx_http_geoip2_module-${MODULE_GEOIP2_VERSION} \

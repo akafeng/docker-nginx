@@ -26,4 +26,5 @@ jobs:
             linux/amd64
             linux/arm64/v8
           cache-to: type=gha, scope=nginx, mode=max
+          build-args: CARGO_NET_GIT_FETCH_WITH_CLI=true
           outputs: type=cacheonly

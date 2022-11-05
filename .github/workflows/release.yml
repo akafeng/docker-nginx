@@ -45,5 +45,6 @@ jobs:
             linux/amd64
             linux/arm64/v8
           cache-from: type=gha, scope=nginx
+          build-args: CARGO_NET_GIT_FETCH_WITH_CLI=true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
