@@ -98,6 +98,10 @@ RUN set -eux \
     \
     # quiche
     && git clone --branch ${QUICHE_VERSION} --depth=1 --recurse-submodules --shallow-submodules ${QUICHE_URL} \
+    && cat << EOF > ~/.cargo/config \
+        [net] \
+        git-fetch-with-cli = true \
+        EOF \
     \
     # PCRE
     && wget -O pcre-${PCRE_VERSION}.tar.gz ${PCRE_URL} \
