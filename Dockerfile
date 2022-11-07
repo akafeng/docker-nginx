@@ -98,6 +98,8 @@ RUN set -eux \
     \
     # quiche
     && git clone --branch ${QUICHE_VERSION} --depth=1 --recurse-submodules --shallow-submodules ${QUICHE_URL} \
+    # fix Cargo OOM
+    && mkdir -p ~/.cargo/ \
     && cat << EOF > ~/.cargo/config \
         [net] \
         git-fetch-with-cli = true \
