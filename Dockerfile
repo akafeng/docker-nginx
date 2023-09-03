@@ -1,39 +1,33 @@
-FROM rust:1.65.0-slim-bullseye AS builder
+FROM rust:1.72.0-slim-bookworm AS builder
 
-ARG NGINX_VERSION="1.23.2"
+ARG NGINX_VERSION="1.25.2"
 ARG NGINX_GPG_KEY="13C82A63B603576156E30A4EA0EA981B66B0D967"
 ARG NGINX_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz"
 ARG NGINX_PGP_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc"
 
-# ARG NGINX_OTHER_PATCH="https://raw.githubusercontent.com/kn007/patch/master/nginx.patch"
-# ARG NGINX_USE_OPENSSL_CRYPTO_PATCH="https://raw.githubusercontent.com/kn007/patch/master/use_openssl_md5_sha1.patch"
-ARG NGINX_OTHER_WITH_QUIC_PATCH="https://raw.githubusercontent.com/kn007/patch/master/nginx_with_quic.patch"
-ARG NGINX_BORINGSSL_OCSP_PATCH="https://raw.githubusercontent.com/kn007/patch/master/Enable_BoringSSL_OCSP.patch"
+ARG NGINX_DYNAMIC_TLS_RECORDS_PATCH="https://github.com/kn007/patch/raw/master/nginx_dynamic_tls_records.patch"
+ARG NGINX_USE_OPENSSL_CRYPTO_PATCH="https://github.com/kn007/patch/raw/master/use_openssl_md5_sha1.patch"
 
 ARG ZLIB_URL="https://github.com/cloudflare/zlib.git"
 
-# ARG OPENSSL_VERSION="1.1.1k"
-# ARG OPENSSL_URL="https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz"
-# ARG OPENSSL_EQUAL_PATCH="https://raw.githubusercontent.com/hakasenyang/openssl-patch/master/openssl-equal-1.1.1e-dev_ciphers.patch"
-# ARG OPENSSL_CHACHA_DRAFT_PATCH="https://raw.githubusercontent.com/CarterLi/openssl-patch/master/openssl-1.1.1i-chacha_draft.patch"
-
-ARG QUICHE_VERSION="0.16.0"
-ARG QUICHE_URL="https://github.com/cloudflare/quiche.git"
+ARG OPENSSL_VERSION="1.1.1v"
+ARG OPENSSL_URL="https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz"
+ARG OPENSSL_PATCH="https://github.com/kn007/patch/raw/master/openssl-1.1.1.patch"
 
 ARG PCRE_VERSION="8.45"
 ARG PCRE_URL="https://downloads.sourceforge.net/project/pcre/pcre/${PCRE_VERSION}/pcre-${PCRE_VERSION}.tar.gz"
 
-ARG LIBATOMIC_VERSION="7.6.14"
+ARG LIBATOMIC_VERSION="7.8.0"
 ARG LIBATOMIC_URL="https://github.com/ivmai/libatomic_ops/releases/download/v${LIBATOMIC_VERSION}/libatomic_ops-${LIBATOMIC_VERSION}.tar.gz"
 
 ARG MODULE_BROTLI_URL="https://github.com/google/ngx_brotli.git"
 
-ARG MODULE_STICKY_URL="https://github.com/dvershinin/nginx-sticky-module-ng.git"
+ARG MODULE_STICKY_URL="https://github.com/liberatti/nginx-sticky-module-ng.git"
 
 ARG MODULE_HEADERS_MORE_VERSION="0.34"
 ARG MODULE_HEADERS_MORE_URL="https://github.com/openresty/headers-more-nginx-module/archive/refs/tags/v${MODULE_HEADERS_MORE_VERSION}.tar.gz"
 
-ARG MODULE_HTTP_FLV_VERSION="1.2.10"
+ARG MODULE_HTTP_FLV_VERSION="1.2.11"
 ARG MODULE_HTTP_FLV_URL="https://github.com/winshining/nginx-http-flv-module/archive/refs/tags/v${MODULE_HTTP_FLV_VERSION}.tar.gz"
 
 ARG MODULE_FANCYINDEX_VERSION="0.5.2"
@@ -86,22 +80,14 @@ RUN set -eux \
             cd zlib/; \
             make -f Makefile.in distclean \
         ) \
-    # \
-    # OpenSSL
-    # && wget -O openssl-${OPENSSL_VERSION}.tar.gz ${OPENSSL_URL} \
-    # && tar -xzvf openssl-${OPENSSL_VERSION}.tar.gz \
-    # && ( \
-    #         cd openssl-${OPENSSL_VERSION}/; \
-    #         wget -O - ${OPENSSL_EQUAL_PATCH} | patch -p1; \
-    #         wget -O - ${OPENSSL_CHACHA_DRAFT_PATCH} | patch -p1 \
-    #     ) \
     \
-    # quiche
-    && git clone --branch ${QUICHE_VERSION} --depth=1 --recurse-submodules --shallow-submodules ${QUICHE_URL} \
-    # fix Cargo OOM
-    && mkdir -p ~/.cargo/ \
-    && echo '[net]' > ~/.cargo/config \
-    && echo 'git-fetch-with-cli = true' >> ~/.cargo/config \
+    # OpenSSL
+    && wget -O openssl-${OPENSSL_VERSION}.tar.gz ${OPENSSL_URL} \
+    && tar -xzvf openssl-${OPENSSL_VERSION}.tar.gz \
+    && ( \
+            cd openssl-${OPENSSL_VERSION}/; \
+            wget -O - ${OPENSSL_PATCH} | patch -p1 \
+        ) \
     \
     # PCRE
     && wget -O pcre-${PCRE_VERSION}.tar.gz ${PCRE_URL} \
@@ -122,6 +108,11 @@ RUN set -eux \
     \
     # nginx-sticky-module-ng
     && git clone --depth 1 ${MODULE_STICKY_URL} \
+    && ( \
+            # fix SHA_CBLOCK redefined
+            cd nginx-sticky-module-ng; \
+            sed -i '/#define SHA_CBLOCK/d' ngx_http_sticky_misc.c \
+        ) \
     \
     # headers-more-nginx
     && wget -O headers-more-nginx-module-${MODULE_HEADERS_MORE_VERSION}.tar.gz ${MODULE_HEADERS_MORE_URL} \
@@ -145,10 +136,8 @@ RUN set -eux \
 RUN set -eux \
     && cd /usr/src/nginx-${NGINX_VERSION}/ \
     \
-    # && wget -O - ${NGINX_OTHER_PATCH} | patch -p1 \
-    # && wget -O - ${NGINX_USE_OPENSSL_CRYPTO_PATCH} | patch -p1 \
-    && wget -O - ${NGINX_OTHER_WITH_QUIC_PATCH} | patch -p1 \
-    && wget -O - ${NGINX_BORINGSSL_OCSP_PATCH} | patch -p1 \
+    && wget -O - ${NGINX_DYNAMIC_TLS_RECORDS_PATCH} | patch -p1 \
+    && wget -O - ${NGINX_USE_OPENSSL_CRYPTO_PATCH} | patch -p1 \
     \
     && ./configure \
         --prefix=/etc/nginx \
@@ -168,6 +157,7 @@ RUN set -eux \
         --group=nginx \
         --with-http_ssl_module \
         --with-http_v2_module \
+        --with-http_v3_module \
         --with-http_realip_module \
         --with-http_addition_module \
         --with-http_sub_module \
@@ -197,10 +187,8 @@ RUN set -eux \
         --with-ld-opt="-Wl,-z,relro -Wl,-z,now -fPIC -ljemalloc -lrt" \
         --with-cc-opt="-O3 -g -DTCP_FASTOPEN=23 -ffast-math -flto -fuse-ld=gold -fstack-protector-strong --param=ssp-buffer-size=4 -Wformat -Werror=format-security -fPIC -Wp,-D_FORTIFY_SOURCE=2 -Wno-deprecated-declarations" \
         --with-zlib=/usr/src/nginx-${NGINX_VERSION}/zlib \
-        # --with-openssl=/usr/src/nginx-${NGINX_VERSION}/openssl-${OPENSSL_VERSION} \
-        # --with-openssl-opt="zlib enable-weak-ssl-ciphers enable-ec_nistp_64_gcc_128 -ljemalloc -Wl,-flto" \
-        --with-openssl=/usr/src/nginx-${NGINX_VERSION}/quiche/quiche/deps/boringssl \
-        --with-quiche=/usr/src/nginx-${NGINX_VERSION}/quiche \
+        --with-openssl=/usr/src/nginx-${NGINX_VERSION}/openssl-${OPENSSL_VERSION} \
+        --with-openssl-opt="zlib enable-weak-ssl-ciphers enable-ec_nistp_64_gcc_128 -ljemalloc -Wl,-flto" \
         --with-pcre=/usr/src/nginx-${NGINX_VERSION}/pcre-${PCRE_VERSION} \
         --with-pcre-jit \
         --with-libatomic=/usr/src/nginx-${NGINX_VERSION}/libatomic_ops-${LIBATOMIC_VERSION} \
@@ -211,8 +199,6 @@ RUN set -eux \
         --add-module=/usr/src/nginx-${NGINX_VERSION}/ngx-fancyindex-${MODULE_FANCYINDEX_VERSION} \
         --add-module=/usr/src/nginx-${NGINX_VERSION}/ngx_http_substitutions_filter_module \
         --add-module=/usr/src/nginx-${NGINX_VERSION}/ngx_http_geoip2_module-${MODULE_GEOIP2_VERSION} \
-        --with-http_v2_hpack_enc \
-        --with-http_v3_module \
     && make -j $(nproc) \
     && make install \
     \
@@ -233,7 +219,7 @@ COPY config/logrotate /etc/nginx/logrotate
 
 ######
 
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 COPY --from=builder /usr/sbin/nginx /usr/sbin/nginx
 COPY --from=builder /etc/nginx/ /etc/nginx/
