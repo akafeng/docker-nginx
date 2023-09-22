@@ -1,4 +1,4 @@
-FROM rust:1.72.0-slim-bookworm AS builder
+FROM debian:bookworm-slim AS builder
 
 ARG NGINX_VERSION="1.25.2"
 ARG NGINX_GPG_KEY="13C82A63B603576156E30A4EA0EA981B66B0D967"
@@ -10,7 +10,7 @@ ARG NGINX_USE_OPENSSL_CRYPTO_PATCH="https://github.com/kn007/patch/raw/master/us
 
 ARG ZLIB_URL="https://github.com/cloudflare/zlib.git"
 
-ARG OPENSSL_VERSION="1.1.1v"
+ARG OPENSSL_VERSION="1.1.1w"
 ARG OPENSSL_URL="https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz"
 ARG OPENSSL_PATCH="https://github.com/kn007/patch/raw/master/openssl-1.1.1.patch"
 
@@ -22,7 +22,7 @@ ARG LIBATOMIC_URL="https://github.com/ivmai/libatomic_ops/releases/download/v${L
 
 ARG MODULE_BROTLI_URL="https://github.com/google/ngx_brotli.git"
 
-ARG MODULE_STICKY_URL="https://github.com/liberatti/nginx-sticky-module-ng.git"
+ARG MODULE_STICKY_URL="https://github.com/xu2ge/nginx-sticky-module-ng.git"
 
 ARG MODULE_HEADERS_MORE_VERSION="0.34"
 ARG MODULE_HEADERS_MORE_URL="https://github.com/openresty/headers-more-nginx-module/archive/refs/tags/v${MODULE_HEADERS_MORE_VERSION}.tar.gz"
@@ -108,11 +108,6 @@ RUN set -eux \
     \
     # nginx-sticky-module-ng
     && git clone --depth 1 ${MODULE_STICKY_URL} \
-    && ( \
-            # fix SHA_CBLOCK redefined
-            cd nginx-sticky-module-ng; \
-            sed -i '/#define SHA_CBLOCK/d' ngx_http_sticky_misc.c \
-        ) \
     \
     # headers-more-nginx
     && wget -O headers-more-nginx-module-${MODULE_HEADERS_MORE_VERSION}.tar.gz ${MODULE_HEADERS_MORE_URL} \
