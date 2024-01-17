@@ -17,14 +17,14 @@ ARG OPENSSL_PATCH="https://github.com/kn007/patch/raw/master/openssl-1.1.1.patch
 ARG PCRE_VERSION="8.45"
 ARG PCRE_URL="https://downloads.sourceforge.net/project/pcre/pcre/${PCRE_VERSION}/pcre-${PCRE_VERSION}.tar.gz"
 
-ARG LIBATOMIC_VERSION="7.8.0"
+ARG LIBATOMIC_VERSION="7.8.2"
 ARG LIBATOMIC_URL="https://github.com/ivmai/libatomic_ops/releases/download/v${LIBATOMIC_VERSION}/libatomic_ops-${LIBATOMIC_VERSION}.tar.gz"
 
 ARG MODULE_BROTLI_URL="https://github.com/google/ngx_brotli.git"
 
 ARG MODULE_STICKY_URL="https://github.com/xu2ge/nginx-sticky-module-ng.git"
 
-ARG MODULE_HEADERS_MORE_VERSION="0.35"
+ARG MODULE_HEADERS_MORE_VERSION="0.37"
 ARG MODULE_HEADERS_MORE_URL="https://github.com/openresty/headers-more-nginx-module/archive/refs/tags/v${MODULE_HEADERS_MORE_VERSION}.tar.gz"
 
 ARG MODULE_HTTP_FLV_VERSION="1.2.11"
