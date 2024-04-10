@@ -1,6 +1,6 @@
 FROM debian:bookworm-slim AS builder
 
-ARG NGINX_VERSION="1.25.3"
+ARG NGINX_VERSION="1.25.4"
 ARG NGINX_GPG_KEY="13C82A63B603576156E30A4EA0EA981B66B0D967"
 ARG NGINX_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz"
 ARG NGINX_PGP_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc"
