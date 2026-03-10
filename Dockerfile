@@ -1,7 +1,7 @@
-FROM debian:bookworm-slim AS builder
+FROM debian:trixie-slim AS builder
 
-ARG NGINX_VERSION="1.27.1"
-ARG NGINX_GPG_KEY="D6786CE303D9A9022998DC6CC8464D549AF75C0A 13C82A63B603576156E30A4EA0EA981B66B0D967"
+ARG NGINX_VERSION="1.29.5"
+ARG NGINX_GPG_KEY="43387825DDB1BB97EC36BA5D007C8D7C15D87369 A1EB079B8D3EB92B4EBD3139663AF51BD5E4D8D5"
 ARG NGINX_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz"
 ARG NGINX_PGP_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc"
 
@@ -17,20 +17,20 @@ ARG OPENSSL_PATCH="https://github.com/kn007/patch/raw/master/openssl-1.1.1.patch
 ARG PCRE_VERSION="8.45"
 ARG PCRE_URL="https://downloads.sourceforge.net/project/pcre/pcre/${PCRE_VERSION}/pcre-${PCRE_VERSION}.tar.gz"
 
-ARG LIBATOMIC_VERSION="7.8.2"
+ARG LIBATOMIC_VERSION="7.10.0"
 ARG LIBATOMIC_URL="https://github.com/ivmai/libatomic_ops/releases/download/v${LIBATOMIC_VERSION}/libatomic_ops-${LIBATOMIC_VERSION}.tar.gz"
 
 ARG MODULE_BROTLI_URL="https://github.com/google/ngx_brotli.git"
 
 ARG MODULE_STICKY_URL="https://github.com/xu2ge/nginx-sticky-module-ng.git"
 
-ARG MODULE_HEADERS_MORE_VERSION="0.37"
+ARG MODULE_HEADERS_MORE_VERSION="0.39"
 ARG MODULE_HEADERS_MORE_URL="https://github.com/openresty/headers-more-nginx-module/archive/refs/tags/v${MODULE_HEADERS_MORE_VERSION}.tar.gz"
 
-ARG MODULE_HTTP_FLV_VERSION="1.2.11"
+ARG MODULE_HTTP_FLV_VERSION="1.2.13"
 ARG MODULE_HTTP_FLV_URL="https://github.com/winshining/nginx-http-flv-module/archive/refs/tags/v${MODULE_HTTP_FLV_VERSION}.tar.gz"
 
-ARG MODULE_FANCYINDEX_VERSION="0.5.2"
+ARG MODULE_FANCYINDEX_VERSION="0.6.0"
 ARG MODULE_FANCYINDEX_URL="https://github.com/aperezdc/ngx-fancyindex/releases/download/v${MODULE_FANCYINDEX_VERSION}/ngx-fancyindex-${MODULE_FANCYINDEX_VERSION}.tar.xz"
 
 ARG MODULE_SUBS_FILTER_URL="https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git"
@@ -52,9 +52,9 @@ RUN set -eux \
         libjemalloc-dev \
         libxslt1-dev \
         libgd-dev \
-        libgeoip-dev \
         libmaxminddb-dev \
-    && rm -rf /var/lib/apt/lists/* /var/log/* \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /var/log/* /var/tmp/* /tmp/* \
     \
     && wget -O nginx.tar.gz ${NGINX_URL} \
     && wget -O nginx.tar.gz.asc ${NGINX_PGP_URL} \
@@ -62,7 +62,6 @@ RUN set -eux \
     && export GNUPGHOME=$(mktemp -d); \
         for key in ${NGINX_GPG_KEY}; do \
             gpg --batch --keyserver hkps://keyserver.ubuntu.com --keyserver-options timeout=10 --recv-keys ${key} || \
-            gpg --batch --keyserver hkps://pgp.surf.nl --keyserver-options timeout=10 --recv-keys ${key} || \
             gpg --batch --keyserver hkp://pgp.mit.edu --keyserver-options timeout=10 --recv-keys ${key}; \
         done \
     && gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
@@ -167,20 +166,18 @@ RUN set -eux \
         --with-http_auth_request_module \
         --with-http_xslt_module \
         --with-http_image_filter_module \
-        --with-http_geoip_module \
         --with-http_slice_module \
         --with-stream \
         --with-stream_ssl_module \
         --with-stream_ssl_preread_module \
         --with-stream_realip_module \
-        --with-stream_geoip_module \
         --with-mail \
         --with-mail_ssl_module \
         --with-file-aio \
         --with-threads \
         --with-compat \
         --with-ld-opt="-Wl,-z,relro -Wl,-z,now -fPIC -ljemalloc -lrt" \
-        --with-cc-opt="-O3 -g -DTCP_FASTOPEN=23 -ffast-math -flto -fuse-ld=gold -fstack-protector-strong --param=ssp-buffer-size=4 -Wformat -Werror=format-security -fPIC -Wp,-D_FORTIFY_SOURCE=2 -Wno-deprecated-declarations" \
+        --with-cc-opt="-O3 -DTCP_FASTOPEN=23 -ffast-math -flto -fstack-protector-strong --param=ssp-buffer-size=4 -Wformat -Werror=format-security -fPIC -Wp,-D_FORTIFY_SOURCE=2 -Wno-deprecated-declarations" \
         --with-zlib=/usr/src/nginx-${NGINX_VERSION}/zlib \
         --with-openssl=/usr/src/nginx-${NGINX_VERSION}/openssl-${OPENSSL_VERSION} \
         --with-openssl-opt="zlib enable-weak-ssl-ciphers enable-ec_nistp_64_gcc_128 -ljemalloc -Wl,-flto" \
@@ -202,7 +199,7 @@ RUN set -eux \
     && install -m644 html/index.html /usr/share/nginx/html/ \
     && install -m644 html/50x.html /usr/share/nginx/html/ \
     \
-    && mkdir /etc/nginx/conf.d/ \
+    && mkdir -p /etc/nginx/conf.d/ \
     \
     && rm -rf /usr/src/ \
     && strip /usr/sbin/nginx \
@@ -214,7 +211,7 @@ COPY config/logrotate /etc/nginx/logrotate
 
 ######
 
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 COPY --from=builder /usr/sbin/nginx /usr/sbin/nginx
 COPY --from=builder /etc/nginx/ /etc/nginx/
@@ -228,19 +225,21 @@ RUN set -eux \
         libjemalloc2 \
         libxslt1.1 \
         libgd3 \
-        libgeoip1 \
         libmaxminddb0 \
-    && rm -rf /var/lib/apt/lists/* /var/log/* \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /var/log/* /var/tmp/* /tmp/* \
     \
     && echo "1 0 * * * /usr/sbin/logrotate -f /etc/logrotate.conf" > /var/spool/cron/crontabs/root \
+    \
     && addgroup --system nginx \
     && adduser --system --disabled-login --ingroup nginx --no-create-home --home /nonexistent --shell /bin/false nginx \
-    && mkdir -p /usr/lib/nginx/modules/ \
-    && ln -s /usr/lib/nginx/modules/ /etc/nginx/modules \
     \
-    && mkdir /var/cache/nginx/ \
+    && mkdir -p /etc/nginx/modules/ \
+    && ln -s /usr/lib/nginx/modules/ /etc/nginx/modules/ \
     \
-    && mkdir /var/log/nginx/ \
+    && mkdir -p /var/cache/nginx/ \
+    \
+    && mkdir -p /var/log/nginx/ \
     && ln -s /dev/stdout /var/log/nginx/access.log \
     && ln -s /dev/stderr /var/log/nginx/error.log \
     \
