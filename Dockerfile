@@ -1,33 +1,34 @@
 FROM debian:trixie-slim AS builder
 
-ARG NGINX_VERSION="1.29.5"
-ARG NGINX_GPG_KEY="43387825DDB1BB97EC36BA5D007C8D7C15D87369 A1EB079B8D3EB92B4EBD3139663AF51BD5E4D8D5"
+ARG NGINX_VERSION="1.31.6"
+ARG NGINX_GPG_KEY="43387825DDB1BB97EC36BA5D007C8D7C15D87369"
 ARG NGINX_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz"
 ARG NGINX_PGP_URL="https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz.asc"
 
 ARG NGINX_DYNAMIC_TLS_RECORDS_PATCH="https://github.com/kn007/patch/raw/master/nginx_dynamic_tls_records.patch"
-ARG NGINX_USE_OPENSSL_CRYPTO_PATCH="https://github.com/kn007/patch/raw/master/use_openssl_md5_sha1.patch"
 
 ARG ZLIB_URL="https://github.com/cloudflare/zlib.git"
 
-ARG OPENSSL_VERSION="1.1.1w"
-ARG OPENSSL_URL="https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz"
-ARG OPENSSL_PATCH="https://github.com/kn007/patch/raw/master/openssl-1.1.1.patch"
+ARG OPENSSL_VERSION="3.5.8"
+ARG OPENSSL_URL="https://github.com/openssl/openssl/releases/download/openssl-$OPENSSL_VERSION/openssl-$OPENSSL_VERSION.tar.gz"
 
-ARG PCRE_VERSION="8.45"
-ARG PCRE_URL="https://downloads.sourceforge.net/project/pcre/pcre/${PCRE_VERSION}/pcre-${PCRE_VERSION}.tar.gz"
+ARG PCRE2_VERSION="10.48"
+ARG PCRE2_URL="https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${PCRE2_VERSION}/pcre2-${PCRE2_VERSION}.tar.gz"
 
 ARG LIBATOMIC_VERSION="7.10.0"
-ARG LIBATOMIC_URL="https://github.com/ivmai/libatomic_ops/releases/download/v${LIBATOMIC_VERSION}/libatomic_ops-${LIBATOMIC_VERSION}.tar.gz"
+ARG LIBATOMIC_URL="https://github.com/bdwgc/libatomic_ops/releases/download/v${LIBATOMIC_VERSION}/libatomic_ops-${LIBATOMIC_VERSION}.tar.gz"
 
 ARG MODULE_BROTLI_URL="https://github.com/google/ngx_brotli.git"
 
+ARG MODULE_ZSTD_VERSION="0.90.9"
+ARG MODULE_ZSTD_URL="https://github.com/myguard-labs/nginx-zstd-module/archive/refs/tags/${MODULE_ZSTD_VERSION}.tar.gz"
+
 ARG MODULE_STICKY_URL="https://github.com/xu2ge/nginx-sticky-module-ng.git"
 
-ARG MODULE_HEADERS_MORE_VERSION="0.39"
+ARG MODULE_HEADERS_MORE_VERSION="0.40"
 ARG MODULE_HEADERS_MORE_URL="https://github.com/openresty/headers-more-nginx-module/archive/refs/tags/v${MODULE_HEADERS_MORE_VERSION}.tar.gz"
 
-ARG MODULE_HTTP_FLV_VERSION="1.2.13"
+ARG MODULE_HTTP_FLV_VERSION="1.2.14"
 ARG MODULE_HTTP_FLV_URL="https://github.com/winshining/nginx-http-flv-module/archive/refs/tags/v${MODULE_HTTP_FLV_VERSION}.tar.gz"
 
 ARG MODULE_FANCYINDEX_VERSION="0.6.0"
@@ -48,7 +49,7 @@ RUN set -eux \
         git \
         file \
         build-essential \
-        cmake \
+        mold \
         libjemalloc-dev \
         libxslt1-dev \
         libgd-dev \
@@ -83,14 +84,10 @@ RUN set -eux \
     # OpenSSL
     && wget -O openssl-${OPENSSL_VERSION}.tar.gz ${OPENSSL_URL} \
     && tar -xzvf openssl-${OPENSSL_VERSION}.tar.gz \
-    && ( \
-            cd openssl-${OPENSSL_VERSION}/; \
-            wget -O - ${OPENSSL_PATCH} | patch -p1 \
-        ) \
     \
-    # PCRE
-    && wget -O pcre-${PCRE_VERSION}.tar.gz ${PCRE_URL} \
-    && tar -xzvf pcre-${PCRE_VERSION}.tar.gz \
+    # PCRE2
+    && wget -O pcre2-${PCRE2_VERSION}.tar.gz ${PCRE2_URL} \
+    && tar -xzvf pcre2-${PCRE2_VERSION}.tar.gz \
     \
     # libatomic_ops
     && wget -O libatomic_ops-${LIBATOMIC_VERSION}.tar.gz ${LIBATOMIC_URL} \
@@ -104,6 +101,10 @@ RUN set -eux \
     \
     # ngx_brotli
     && git clone --depth=1 --recurse-submodules --shallow-submodules ${MODULE_BROTLI_URL} \
+    \
+    # nginx-zstd-module
+    && wget -O nginx-zstd-module-${MODULE_ZSTD_VERSION}.tar.gz ${MODULE_ZSTD_URL} \
+    && tar -xzvf nginx-zstd-module-${MODULE_ZSTD_VERSION}.tar.gz \
     \
     # nginx-sticky-module-ng
     && git clone --depth 1 ${MODULE_STICKY_URL} \
@@ -131,7 +132,6 @@ RUN set -eux \
     && cd /usr/src/nginx-${NGINX_VERSION}/ \
     \
     && wget -O - ${NGINX_DYNAMIC_TLS_RECORDS_PATCH} | patch -p1 \
-    && wget -O - ${NGINX_USE_OPENSSL_CRYPTO_PATCH} | patch -p1 \
     \
     && ./configure \
         --prefix=/etc/nginx \
@@ -176,15 +176,16 @@ RUN set -eux \
         --with-file-aio \
         --with-threads \
         --with-compat \
-        --with-ld-opt="-Wl,-z,relro -Wl,-z,now -fPIC -ljemalloc -lrt" \
-        --with-cc-opt="-O3 -DTCP_FASTOPEN=23 -ffast-math -flto -fstack-protector-strong --param=ssp-buffer-size=4 -Wformat -Werror=format-security -fPIC -Wp,-D_FORTIFY_SOURCE=2 -Wno-deprecated-declarations" \
+        --with-ld-opt='-Wl,-s -Wl,-z,relro -Wl,-z,now -fPIC -ljemalloc -lrt -flto=4 -fuse-ld=mold' \
+        --with-cc-opt="-O3 -fcode-hoisting -DTCP_FASTOPEN=23 -ffast-math -flto=4 -fstack-protector-strong --param=ssp-buffer-size=4 -Wformat -Werror=format-security -fno-strict-aliasing -fPIC -Wp,-D_FORTIFY_SOURCE=2 -Wimplicit-fallthrough=0 -Wno-cast-function-type -Wno-format-extra-args -Wno-deprecated-declarations -Wno-stringop-overflow -falign-functions=32 -fuse-ld=mold" \
         --with-zlib=/usr/src/nginx-${NGINX_VERSION}/zlib \
         --with-openssl=/usr/src/nginx-${NGINX_VERSION}/openssl-${OPENSSL_VERSION} \
-        --with-openssl-opt="zlib enable-weak-ssl-ciphers enable-ec_nistp_64_gcc_128 -ljemalloc -Wl,-flto" \
-        --with-pcre=/usr/src/nginx-${NGINX_VERSION}/pcre-${PCRE_VERSION} \
+        --with-openssl-opt='enable-ec_nistp_64_gcc_128 enable-ktls no-shared -O3 -fPIC -fstack-protector-strong' \
+        --with-pcre=/usr/src/nginx-${NGINX_VERSION}/pcre2-${PCRE2_VERSION} \
         --with-pcre-jit \
         --with-libatomic=/usr/src/nginx-${NGINX_VERSION}/libatomic_ops-${LIBATOMIC_VERSION} \
         --add-module=/usr/src/nginx-${NGINX_VERSION}/ngx_brotli \
+        --add-module=/usr/src/nginx-${NGINX_VERSION}/nginx-zstd-module-${MODULE_ZSTD_VERSION} \
         --add-module=/usr/src/nginx-${NGINX_VERSION}/nginx-sticky-module-ng \
         --add-module=/usr/src/nginx-${NGINX_VERSION}/headers-more-nginx-module-${MODULE_HEADERS_MORE_VERSION} \
         --add-module=/usr/src/nginx-${NGINX_VERSION}/nginx-http-flv-module-${MODULE_HTTP_FLV_VERSION} \
@@ -206,7 +207,7 @@ RUN set -eux \
     && nginx -V
 
 COPY config/nginx.conf /etc/nginx/nginx.conf
-COPY config/nginx.vhost.default.conf /etc/nginx/conf.d/default.conf
+COPY config/nginx.vhost.builtin.conf /etc/nginx/conf.d/default.conf
 COPY config/logrotate /etc/nginx/logrotate
 
 ######
